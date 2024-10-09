@@ -25,13 +25,8 @@ export class UserController {
     }
 
     async save(request: Request, response: Response, next: NextFunction) {
-        const { firstName, lastName, age } = request.body;
-
-        const user = Object.assign(new User(), {
-            firstName,
-            lastName,
-            age
-        })
+        //TODO get save working so that it actually updates an existing User
+        const user = Object.assign(new User(), request.body)
 
         return this.userRepository.save(user)
     }
