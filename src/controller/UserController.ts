@@ -27,7 +27,7 @@ export class UserController {
     async save(request: Request, response: Response, next: NextFunction) {
         //TODO get save working so that it actually updates an existing User
         const user = Object.assign(new User(), request.body)
-
+        // NEED to enforce the validation rules before we try to save to the DB .... to be continued 
         return this.userRepository.save(user)
     }
 

@@ -1,18 +1,25 @@
+import { IsNotEmpty, IsOptional, Length, MaxLength, Min } from "class-validator"
 import { Entity, PrimaryGeneratedColumn, Column } from "typeorm"
 
 @Entity()
 export class User {
 
     @PrimaryGeneratedColumn()
+    @IsOptional() // optional in our code because the DB will generate the id
     id: number
 
-    @Column()
+    //@Column ONLY RUNS ONCE - when creating the DB/tables
+    @Column({ type: 'varchar', length: 50, nullable: false})
+    @Length(1,50,{message: 'First name must be 1 to 50 characters'})
     firstName: string
 
-    @Column()
+    @Column({ type: 'varchar', length: 50, nullable: false})
+    @MaxLength(50, {message: 'Last name must be max 50 characters'})
+    @IsNotEmpty({message: 'Last name is required'})
     lastName: string
 
-    @Column()
+    
+    @Column({ type: 'integer', width: 3, nullable: true, default: 29})
+    @Min(min: 13)
     age: number
-
 }
