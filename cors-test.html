@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<input type="number" id="idInput">
+<button type="button" onclick="callDelete()">DELETE</button>
+<script>
+    const idInput = document.getElementById("idInput")
+    function callDelete() {
+        var requestOptions = {
+            method: 'GET',
+            redirect: 'follow'
+        };
+
+        fetch("http://localhost:3004/users/10", requestOptions)
+            .then(response => response.text())
+            .then(result => alert(result))
+            .catch(error => console.log('error', error));
+    }
+</script>
+<body>
+
+</body>
+</html>
