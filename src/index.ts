@@ -1,31 +1,34 @@
 import * as express from "express"
 import * as bodyParser from "body-parser"
-import {Request, Response} from "express"
+import {NextFunction, Request, Response} from "express"
 import {AppDataSource} from "./data-source"
 import {User} from "./entity/User"
 import {UserController} from "./controller/UserController";
 import {RouteDefinition} from "./decrorator/RouteDefinition";
-import * as createError from "http-errors";
-import * as cors from "cors";
+import * as createError from "http-errors"
+import * as cors from "cors"
+import StudentController from "./controller/StudentController";
 
 const corsOptions = {
+    credentials: true, // allow cookies on a fetch - if needed
     origin: /localhost:\d{4,5}$/i,
-    credentials: true, // allow cookie to be sent IF NEEDED
-    allowHeaders: 'Origin, X-Requested-With, Content-Type, Accept, Authorization',
-    methods: 'GET,POST,DELETE,OPTIONS'
+    allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+    methods: "GET,POST, DELETE, OPTIONS"
+
 }
+
 AppDataSource.initialize().then(async () => {
 
     // create express app
     const app = express()
     app.use(bodyParser.json())
     app.use(cors(corsOptions))
-    // You can add even more CORS restrictions for a super secure server
-    app.use((req, res, next) => {
-        // add more header limitations here
+    app.use((req: Request, res: Response, next: NextFunction) => {
+        // You CAN ADD more restrictions like making the X-Requested-With mandatory
+        // for super secure api servers
         next()
     })
-    app.options('*', cors(corsOptions)) // failsafe to ensure the browser pre-flight check succeeds
+    app.options('*', cors(corsOptions)) //* means whatever path
 
     // register express routes from defined application routes
     /*    Routes.forEach(route => {
@@ -40,11 +43,11 @@ AppDataSource.initialize().then(async () => {
             })
         })*/
 
-    // setup express app here
-    // ...
-// Iterate over all our controllers and register our routes
+    // Iterate over all our controllers and register our routes
     const controllers = [
-        UserController
+        UserController,
+        // add other controllers here - IF CONTROLLER is not here than no handlers will be connected
+        StudentController
 // Add other controllers here
     ];
     controllers.forEach((controller) => {
@@ -57,45 +60,52 @@ AppDataSource.initialize().then(async () => {
         const routes: Array<RouteDefinition> = Reflect.getMetadata('routes', controller);
 // Iterate over all routes and register them to our express application
         routes.forEach((route) => {
-            app[route.method](path + route.param, (req: express.Request, res: express.Response,
-                                                   next: express.NextFunction) => {
+            app[route.method.toLowerCase()](path + route.param, (req: express.Request, res: express.Response,
+                                                                 next: express.NextFunction) => {
                 const result = instance[route.action](req, res, next);
                 if (result instanceof Promise) {
                     result.then((result) => result !== null && result !== undefined ? res.send(result) :
                         next())
-                        .catch((err) => /*next(createError(500, err))*/false);
+                        .catch((err) => next(createError(500, err)));
                 } else if (result !== null && result !== undefined) res.json(result);
             });
         });
     });
 
-    app.use((res, req, next) => {
+    // catch 404 and forward to error handler
+    // umbrella code to catach all errors
+    app.use((req, res, next) => {
         next(createError(404))
     })
+
     app.use((err, req, res, next) => {
         res.status(err.status || 500);
-        res.json({error: err.message, status:err.status, stack:err.stack.split(/\s{4,}/)});
+        // set json array
+        res.json({error: err.message, status: err.status, stack: err.stack.split(/\s{4,}/)});
     })
+    // setup express app here
+    // ...
+
     // start express server
     const port = process.env.PORT || 3004
     app.listen(port)
 
     // insert new users for test
-    // await AppDataSource.manager.save(
-    //     AppDataSource.manager.create(User, {
-    //         firstName: "Timber",
-    //         lastName: "Saw",
-    //         age: 27
-    //     })
-    // )
-    //
-    // await AppDataSource.manager.save(
-    //     AppDataSource.manager.create(User, {
-    //         firstName: "Phantom",
-    //         lastName: "Assassin",
-    //         age: 24
-    //     })
-    // )
+    await AppDataSource.manager.save(
+        AppDataSource.manager.create(User, {
+            firstName: "Timber",
+            lastName: "Saw",
+            age: 27
+        })
+    )
+
+    await AppDataSource.manager.save(
+        AppDataSource.manager.create(User, {
+            firstName: "Phantom",
+            lastName: "Assassin",
+            age: 24
+        })
+    )
 
     console.log(`Open http://localhost:${port}/users to see results`)
 
