@@ -39,4 +39,32 @@ export default class StudentController {
         return this.studentRepo.delete({id: req.params.uuid})
     }
 
+    @Route('post')
+    async create(req: Request, res: Response, next: NextFunction) {
+        // get the validations rules (new Student()) and the student data (req.body) and the merge them
+        const studnetToInsert = Object.assign(new Student(), req.body)
+        const violations = await validate(studnetToInsert, this.validOptions)
+        if (!violations.length) {
+            res.StatusCode = 201 // CREATED status code
+            return this.studentRepo.insert(req.body);
+        } else {
+            res.statusCode = 422
+            return violations;
+        }
+
+    }
+
+    //update action
+    @Route('put', '/:uuid')
+    async update(req: Request, res: Response, next: NextFunction) {
+        const studentToUpdate = Object.assign(new Student(), req.body)
+        const violations = await validate(studentToUpdate, this.validOptions)
+        if (!violations.length) {
+            return this.studentRepo.update({ id: req.params.uuid }, studentToUpdate);
+        } else {
+            return violations
+        }
+
+    }
+
 }
