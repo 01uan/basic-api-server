@@ -13,8 +13,7 @@ const corsOptions = {
     credentials: true, // allow cookies on a fetch - if needed
     origin: /localhost:\d{4,5}$/i,
     allowedHeaders: "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-    methods: "GET,POST, DELETE, OPTIONS"
-
+    methods: "GET,POST, DELETE, OPTIONS, PUT"
 }
 
 AppDataSource.initialize().then(async () => {

@@ -25,7 +25,13 @@ export default class StudentController {
         if (req.params.uuid) {
             return this.studentRepo.findOneBy({id: req.params.uuid})
         } else {
-            return this.studentRepo.find()
+            // WE CAN build the find OPtions (aka, where clauses and order by caluses) from the query string "req.query"
+            //
+            const findOptions = {where:{}, order:{}}
+            const sortField: string = req.query.sort
+            const sortDirection:string = req.query.reverse? "DESC" : "ASC"
+            findOptions.order[sortField] = sortDirection
+            return this.studentRepo.find(); // reutn all students
         }
     }
 
@@ -37,6 +43,7 @@ export default class StudentController {
         }
         // we usually want to pass in the whole object and not just the uuid
         return this.studentRepo.delete({id: req.params.uuid})
+        // see the delete method in the repo for an alterntaive that does not quire getting the sutdent from db
     }
 
     @Route('post')
@@ -57,14 +64,30 @@ export default class StudentController {
     //update action
     @Route('put', '/:uuid')
     async update(req: Request, res: Response, next: NextFunction) {
-        const studentToUpdate = Object.assign(new Student(), req.body)
-        const violations = await validate(studentToUpdate, this.validOptions)
-        if (!violations.length) {
-            return this.studentRepo.update({ id: req.params.uuid }, studentToUpdate);
-        } else {
-            return violations
+
+        // check params uuid is the same as the id in the req.body
+        // do this simple check before accesing the db, save some processor cycles
+        if (req.params.uuid != req.body.id) {
+            next()
         }
 
+        const studentExists:boolean = await this.studentRepo.exists({where:{id: req.params.uuid}})
+
+
+        if (!studentExists) {
+            next() // gets caught by umbrella 404 error in index.ts
+        } else {
+            const studentToUpdate = Object.assign(new Student(), req.body)
+            // we have to validate WHENEVER we update save/update ot the db
+            const violations = await validate(studentToUpdate, this.validOptions)
+            if (!violations.length) {
+                res.statusCode = 422 //un processable content
+                return violations
+            } else {
+                res.statusCode = 200 // accepted - but usually updates will respond with 200
+                return this.studentRepo.update(req.param.uuid, studentToUpdate)
+            }
+        }
     }
 
 }
