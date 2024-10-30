@@ -5,6 +5,7 @@ import {contains, validate, ValidatorOptions} from "class-validator";
 import {Controller} from "../decrorator/Controller";
 import {Route} from "../decrorator/Route";
 import {Student} from "../entity/Student";
+import {Like} from "typeorm";
 @Controller('/op')
 
 export default class StudentController {
@@ -27,11 +28,23 @@ export default class StudentController {
         } else {
             // WE CAN build the find OPtions (aka, where clauses and order by caluses) from the query string "req.query"
             //
-            const findOptions = {where:{}, order:{}}
-            const sortField: string = req.query.sort
+            const findOptions = {where:[], order:{}}
+            const existingFields = this.studentRepo.metadata.ownColumns.map((col) => col.propertyName);
+
+            const sortField: string = existingFields.includes(req.query.sort) ? req.query.sort : 'id';
             const sortDirection:string = req.query.reverse? "DESC" : "ASC"
             findOptions.order[sortField] = sortDirection
-            return this.studentRepo.find(); // reutn all students
+            console.log('Order clause:\n', findOptions.order);
+            // look for query param trouve
+            // loop thru all the existingField (aka column names/propeties) and build a where clause
+
+            for (const columnName of existingFields) {
+                // syntactic sugar when building a js object with a dynamic property name
+                // use [] brackets around the variab le
+                findOptions.where.push({[columnName]: Like(`%${req.query.trouve}%`)})
+            }
+            console.log('Where clause\n', findOptions.where)
+            return this.studentRepo.find(findOptions); // reutn all students
         }
     }
 

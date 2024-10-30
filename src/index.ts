@@ -21,7 +21,7 @@ AppDataSource.initialize().then(async () => {
     // create express app
     const app = express()
     app.use(bodyParser.json())
-    app.use(cors(corsOptions))
+    app.use(cors)
     app.use((req: Request, res: Response, next: NextFunction) => {
         // You CAN ADD more restrictions like making the X-Requested-With mandatory
         // for super secure api servers
